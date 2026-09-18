@@ -207,6 +207,31 @@
     .main-nav a[aria-current="true"],
     .main-nav a:hover { color: var(--accent-strong);}
 
+    .nav-toggle {
+      display: none;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      place-items: center;
+    }
+
+    .nav-toggle .bar {
+      display: block;
+      width: 18px;
+      height: 1.5px;
+      margin: 3px auto;
+      background: currentColor;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+
+    .nav-toggle[aria-expanded="true"] .bar:nth-child(1) { transform: translateY(4.5px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .bar:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] .bar:nth-child(3) { transform: translateY(-4.5px) rotate(-45deg); }
+
     .theme-toggle {
       display: inline-grid;
       width: 30px;
@@ -1104,13 +1129,34 @@ html[data-theme="light"] .theme-glyph .sun-icon {
     @media (max-width: 560px) {
       body { font-size: 14px; }
       .page { width: min(100% - 32px, var(--max)); }
-      .site-header { gap: 18px; }
+      .site-header { position: relative; align-items: center; gap: 18px; padding-bottom: 40px; }
       .identity { gap: 9px; }
       .mark { width: 39px; height: 39px; font-size: 10px; }
       .identity-name { font-size: 13px; }
-      .header-actions { gap: 9px; }
-      .main-nav a { font-size: 10px; }
-      .theme-toggle { width: 31px; height: 31px; }
+      .header-actions { flex-direction: row; align-items: center; gap: 6px; }
+      .nav-toggle { display: inline-grid; order: 2; }
+      .theme-toggle { order: 1; width: 31px; height: 31px; }
+
+      .main-nav { position: static; }
+      .main-nav ul {
+        display: none;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        top: calc(100% + 8px);
+        margin-top: 0;
+        padding: 16px 20px;
+        background: var(--panel);
+        border: 1px solid var(--rule);
+        box-shadow: var(--shadow);
+        z-index: 15;
+      }
+      .main-nav.open ul { display: flex; }
+      .main-nav li:not(:last-child)::after { display: none; }
+      .main-nav a { font-size: 13px; }
       .hero { display: block; padding-bottom: 46px; }
       h1 { max-width: none; font-size: 22px; }
       .robot {
@@ -1152,7 +1198,12 @@ html[data-theme="light"] .theme-glyph .sun-icon {
       </a>
 
       <div class="header-actions">
-        <nav class="main-nav" aria-label="Primary navigation">
+        <button class="nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="primaryNav" aria-label="Toggle navigation menu">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+        <nav class="main-nav" id="primaryNav" aria-label="Primary navigation">
           <ul>
             <li><a href="#home" aria-current="true">Home</a></li>
             <li><a href="#about">About</a></li>
@@ -1591,6 +1642,32 @@ html[data-theme="light"] .theme-glyph .sun-icon {
       var projects = Array.prototype.slice.call(document.querySelectorAll(".project"));
       var navLinks = Array.prototype.slice.call(document.querySelectorAll(".main-nav a"));
       var sections = Array.prototype.slice.call(document.querySelectorAll("main section[id]"));
+      var navToggle = document.getElementById("navToggle");
+      var mainNav = document.querySelector(".main-nav");
+
+      function closeNav() {
+        mainNav.classList.remove("open");
+        navToggle.setAttribute("aria-expanded", "false");
+      }
+
+      navToggle.addEventListener("click", function () {
+        var isOpen = mainNav.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", String(isOpen));
+      });
+
+      navLinks.forEach(function (link) {
+        link.addEventListener("click", closeNav);
+      });
+
+      document.addEventListener("click", function (event) {
+        if (!mainNav.contains(event.target) && event.target !== navToggle && !navToggle.contains(event.target)) {
+          closeNav();
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") closeNav();
+      });
 
       year.textContent = new Date().getFullYear();
 
